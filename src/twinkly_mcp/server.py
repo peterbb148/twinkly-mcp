@@ -45,6 +45,7 @@ KNOWN_CARDS = [
     "test_pattern",
     "tetris",
     "text",
+    "twinklysay",
     "weather",
 ]
 
