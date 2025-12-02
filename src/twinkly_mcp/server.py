@@ -29,13 +29,14 @@ mcp = FastMCP(
 
 
 @mcp.tool()
-def twinklysay(text: str) -> dict:
+def twinklysay(text: str, color: str | None = None) -> dict:
     """Display a text message on the Twinkly LED wall.
 
     The message will scroll across the 50x10 LED matrix.
 
     Args:
         text: The message to display (max 200 characters)
+        color: Optional color name (red, green, blue, yellow, white, etc.) or hex code (#FF0000)
 
     Returns:
         Confirmation with command ID
@@ -47,7 +48,11 @@ def twinklysay(text: str) -> dict:
     if len(text) > 200:
         return {"error": "Text too long (max 200 characters)"}
 
-    cmd = command_queue.add("twinklysay", {"text": text})
+    payload = {"text": text}
+    if color:
+        payload["color"] = color.strip()
+
+    cmd = command_queue.add("twinklysay", payload)
 
     return {
         "status": "queued",
