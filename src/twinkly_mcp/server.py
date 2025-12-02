@@ -65,7 +65,7 @@ mcp = FastMCP(
 )
 
 
-@mcp.tool
+@mcp.tool()
 def twinklysay(text: str) -> dict:
     """Display a text message on the Twinkly LED wall.
 
@@ -93,7 +93,7 @@ def twinklysay(text: str) -> dict:
     }
 
 
-@mcp.tool
+@mcp.tool()
 def run_card(card_id: str) -> dict:
     """Run a specific display card on the Twinkly LED wall.
 
@@ -122,7 +122,7 @@ def run_card(card_id: str) -> dict:
     }
 
 
-@mcp.tool
+@mcp.tool()
 def list_cards() -> dict:
     """List all available display cards.
 
@@ -221,11 +221,11 @@ mcp_app = mcp.http_app(path="/mcp")
 # Create combined Starlette app
 app = Starlette(
     routes=[
-        # Mount MCP server
-        Mount("/", app=mcp_app),
-        # Custom HTTP endpoints
+        # Custom HTTP endpoints (must be before MCP mount to be matched first)
         Route("/api/commands/poll", poll_commands, methods=["GET"]),
         Route("/health", health_check, methods=["GET"]),
+        # Mount MCP server (catch-all at root)
+        Mount("/", app=mcp_app),
     ],
     middleware=[
         Middleware(APIKeyAuthMiddleware),
