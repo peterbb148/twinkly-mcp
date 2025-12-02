@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: twinkly-mcp
+    runtime: python
+    region: frankfurt
+    plan: free
+    buildCommand: pip install .
+    startCommand: uvicorn twinkly_mcp.server:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: TWINKLY_API_KEY
+        sync: false
+    healthCheckPath: /health
+    autoDeploy: true
