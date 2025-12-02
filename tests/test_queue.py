@@ -108,7 +108,7 @@ class TestCommandQueue:
 
     def test_thread_safety(self):
         """Test that the queue is thread-safe."""
-        queue = CommandQueue()
+        queue = CommandQueue(max_size=500)  # Allow all 300 commands
         errors = []
 
         def add_commands(prefix: str, count: int):
