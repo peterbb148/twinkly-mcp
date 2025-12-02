@@ -220,7 +220,7 @@ class APIKeyAuthMiddleware(BaseHTTPMiddleware):
 # Get MCP ASGI app
 mcp_app = mcp.http_app(path="/mcp")
 
-# Create combined Starlette app
+# Create combined Starlette app with MCP lifespan
 app = Starlette(
     routes=[
         # Custom HTTP endpoints (must be before MCP mount to be matched first)
@@ -234,6 +234,7 @@ app = Starlette(
     middleware=[
         Middleware(APIKeyAuthMiddleware),
     ],
+    lifespan=mcp_app.lifespan,
 )
 
 
