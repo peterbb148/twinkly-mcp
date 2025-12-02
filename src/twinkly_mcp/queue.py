@@ -90,3 +90,112 @@ class CommandQueue:
 
 # Singleton queue instance
 command_queue = CommandQueue()
+
+
+class CardRegistry:
+    """Thread-safe registry of available display cards.
+
+    The Raspberry Pi can register its available cards on startup,
+    which then become available for the run_card MCP tool.
+    """
+
+    # Default cards (fallback if Pi hasn't registered yet)
+    DEFAULT_CARDS = [
+        "beer",
+        "calendar",
+        "carlsberg_lab",
+        "clock",
+        "coffee",
+        "confetti",
+        "countdown",
+        "fire",
+        "fireworks",
+        "friday",
+        "image",
+        "lava",
+        "leaderboard",
+        "matrix",
+        "menorah",
+        "news",
+        "ocean",
+        "pacman",
+        "pacman_chase",
+        "pong",
+        "pomodoro",
+        "quote",
+        "rainbow",
+        "santa",
+        "snake",
+        "snow",
+        "space_invaders",
+        "starfield",
+        "test_pattern",
+        "tetris",
+        "text",
+        "tuborg_julebryg",
+        "twinklysay",
+        "weather",
+    ]
+
+    def __init__(self):
+        self._cards: set[str] = set(self.DEFAULT_CARDS)
+        self._lock = threading.Lock()
+
+    def register(self, cards: list[str]) -> None:
+        """Register available cards from the Raspberry Pi.
+
+        This replaces the current card list with the new one.
+
+        Args:
+            cards: List of card type IDs
+        """
+        with self._lock:
+            self._cards = set(card.lower().strip() for card in cards)
+
+    def add(self, card_id: str) -> None:
+        """Add a single card to the registry.
+
+        Args:
+            card_id: Card type ID to add
+        """
+        with self._lock:
+            self._cards.add(card_id.lower().strip())
+
+    def remove(self, card_id: str) -> None:
+        """Remove a card from the registry.
+
+        Args:
+            card_id: Card type ID to remove
+        """
+        with self._lock:
+            self._cards.discard(card_id.lower().strip())
+
+    def is_known(self, card_id: str) -> bool:
+        """Check if a card is registered.
+
+        Args:
+            card_id: Card type ID to check
+
+        Returns:
+            True if the card is registered
+        """
+        with self._lock:
+            return card_id.lower().strip() in self._cards
+
+    def list_cards(self) -> list[str]:
+        """Get list of all registered cards.
+
+        Returns:
+            Sorted list of card IDs
+        """
+        with self._lock:
+            return sorted(self._cards)
+
+    def clear(self) -> None:
+        """Clear all cards (for testing)."""
+        with self._lock:
+            self._cards.clear()
+
+
+# Singleton card registry instance
+card_registry = CardRegistry()

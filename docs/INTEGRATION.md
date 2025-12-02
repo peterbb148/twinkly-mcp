@@ -106,7 +106,9 @@ Switch to a specific display card/animation.
 - `news`, `ocean`, `pacman`, `pacman_chase`, `pong`
 - `pomodoro`, `quote`, `rainbow`, `santa`, `snake`
 - `snow`, `space_invaders`, `starfield`, `test_pattern`
-- `tetris`, `text`, `twinklysay`, `weather`
+- `tetris`, `text`, `tuborg_julebryg`, `twinklysay`, `weather`
+
+Note: The card list is dynamic. The Raspberry Pi can register its available cards on startup (see Card Registration below).
 
 ## Polling Implementation
 
@@ -214,9 +216,74 @@ curl https://twinkly-mcp.onrender.com/api/commands/poll
 curl "https://twinkly-mcp.onrender.com/api/commands/poll?after=cmd_000005"
 ```
 
+## Card Registration
+
+The Raspberry Pi can register its available cards with the server on startup. This allows the server to know which cards are actually available.
+
+### Register Cards
+
+```
+POST /api/cards/register
+Content-Type: application/json
+
+{
+  "cards": ["beer", "calendar", "clock", "weather", "tuborg_julebryg", ...]
+}
+```
+
+**Response:**
+```json
+{
+  "status": "registered",
+  "count": 35,
+  "cards": ["beer", "calendar", "clock", ...]
+}
+```
+
+### Get Available Cards
+
+```
+GET /api/cards
+```
+
+**Response:**
+```json
+{
+  "cards": ["beer", "calendar", "clock", "weather", ...]
+}
+```
+
+### Recommended Registration Logic
+
+```python
+import requests
+
+SERVER_URL = "https://twinkly-mcp.onrender.com"
+
+def register_cards():
+    """Register available cards with the MCP server on startup."""
+    # Get list of available card types from twinkly-wall
+    from twinkly_wall.cards import list_card_types
+    cards = list_card_types()
+
+    response = requests.post(
+        f"{SERVER_URL}/api/cards/register",
+        json={"cards": cards},
+        timeout=10,
+    )
+    response.raise_for_status()
+
+    data = response.json()
+    print(f"Registered {data['count']} cards with MCP server")
+
+# Call on startup
+register_cards()
+```
+
 ## Server Implementation Notes
 
 - Commands are stored in-memory (not persisted across restarts)
 - Maximum 100 commands retained (oldest pruned automatically)
 - Command IDs are sequential: `cmd_000001`, `cmd_000002`, etc.
 - ISO 8601 timestamps with timezone info
+- Card registry persists in memory but resets on server restart (default cards are used as fallback)

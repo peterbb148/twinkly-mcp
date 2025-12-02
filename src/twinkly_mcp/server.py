@@ -10,44 +10,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.routing import Mount, Route
 
-from .queue import command_queue
-
-# Known card types from twinkly-wall
-KNOWN_CARDS = [
-    "beer",
-    "calendar",
-    "carlsberg_lab",
-    "clock",
-    "coffee",
-    "confetti",
-    "countdown",
-    "fire",
-    "fireworks",
-    "friday",
-    "image",
-    "lava",
-    "leaderboard",
-    "matrix",
-    "menorah",
-    "news",
-    "ocean",
-    "pacman",
-    "pacman_chase",
-    "pong",
-    "pomodoro",
-    "quote",
-    "rainbow",
-    "santa",
-    "snake",
-    "snow",
-    "space_invaders",
-    "starfield",
-    "test_pattern",
-    "tetris",
-    "text",
-    "twinklysay",
-    "weather",
-]
+from .queue import card_registry, command_queue
 
 
 def get_api_key() -> str | None:
@@ -107,10 +70,10 @@ def run_card(card_id: str) -> dict:
     """
     card_id = card_id.lower().strip()
 
-    if card_id not in KNOWN_CARDS:
+    if not card_registry.is_known(card_id):
         return {
             "error": f"Unknown card '{card_id}'",
-            "available_cards": KNOWN_CARDS,
+            "available_cards": card_registry.list_cards(),
         }
 
     cmd = command_queue.add("run_card", {"card_id": card_id})
@@ -129,7 +92,7 @@ def list_cards() -> dict:
     Returns:
         List of card IDs that can be used with run_card
     """
-    return {"cards": KNOWN_CARDS}
+    return {"cards": card_registry.list_cards()}
 
 
 # ============================================================
@@ -167,6 +130,45 @@ async def poll_commands(request: Request) -> JSONResponse:
 async def health_check(request: Request) -> JSONResponse:
     """GET /health - Health check endpoint."""
     return JSONResponse({"status": "healthy", "service": "twinkly-mcp"})
+
+
+async def register_cards(request: Request) -> JSONResponse:
+    """POST /api/cards/register - Register available cards from the Pi.
+
+    Body:
+        {"cards": ["card_id_1", "card_id_2", ...]}
+
+    This replaces the current card list with the provided list.
+    """
+    try:
+        body = await request.json()
+        cards = body.get("cards", [])
+
+        if not isinstance(cards, list):
+            return JSONResponse(
+                {"error": "cards must be a list"},
+                status_code=400,
+            )
+
+        card_registry.register(cards)
+
+        return JSONResponse({
+            "status": "registered",
+            "count": len(cards),
+            "cards": card_registry.list_cards(),
+        })
+    except Exception as e:
+        return JSONResponse(
+            {"error": str(e)},
+            status_code=400,
+        )
+
+
+async def get_cards(request: Request) -> JSONResponse:
+    """GET /api/cards - Get list of registered cards."""
+    return JSONResponse({
+        "cards": card_registry.list_cards(),
+    })
 
 
 # ============================================================
@@ -223,6 +225,8 @@ app = Starlette(
     routes=[
         # Custom HTTP endpoints (must be before MCP mount to be matched first)
         Route("/api/commands/poll", poll_commands, methods=["GET"]),
+        Route("/api/cards", get_cards, methods=["GET"]),
+        Route("/api/cards/register", register_cards, methods=["POST"]),
         Route("/health", health_check, methods=["GET"]),
         # Mount MCP server (catch-all at root)
         Mount("/", app=mcp_app),
