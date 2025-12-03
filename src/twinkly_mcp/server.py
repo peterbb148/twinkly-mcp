@@ -176,6 +176,61 @@ async def get_cards(request: Request) -> JSONResponse:
     })
 
 
+async def api_twinklysay(request: Request) -> JSONResponse:
+    """POST /api/twinklysay - Send a message to display."""
+    try:
+        body = await request.json()
+        text = body.get("text", "")
+        color = body.get("color")
+
+        if not text or not text.strip():
+            return JSONResponse({"error": "Text cannot be empty"}, status_code=400)
+
+        text = text.strip()
+        if len(text) > 200:
+            return JSONResponse({"error": "Text too long (max 200 chars)"}, status_code=400)
+
+        payload = {"text": text}
+        if color:
+            payload["color"] = color.strip()
+
+        cmd = command_queue.add("twinklysay", payload)
+
+        return JSONResponse({
+            "status": "queued",
+            "command_id": cmd.id,
+            "message": f"Message queued: '{text[:50]}{'...' if len(text) > 50 else ''}'",
+        })
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
+
+
+async def api_run_card(request: Request) -> JSONResponse:
+    """POST /api/run_card - Run a display card."""
+    try:
+        body = await request.json()
+        card_id = body.get("card_id", "").lower().strip()
+
+        if not card_id:
+            return JSONResponse({"error": "card_id required"}, status_code=400)
+
+        if not card_registry.is_known(card_id):
+            return JSONResponse({
+                "error": f"Unknown card '{card_id}'",
+                "available_cards": card_registry.list_cards(),
+            }, status_code=400)
+
+        cmd = command_queue.add("run_card", {"card_id": card_id})
+
+        return JSONResponse({
+            "status": "queued",
+            "command_id": cmd.id,
+            "message": f"Card '{card_id}' queued for display",
+        })
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
+
+
 # ============================================================
 # Authentication Middleware
 # ============================================================
@@ -232,6 +287,8 @@ app = Starlette(
         Route("/api/commands/poll", poll_commands, methods=["GET"]),
         Route("/api/cards", get_cards, methods=["GET"]),
         Route("/api/cards/register", register_cards, methods=["POST"]),
+        Route("/api/twinklysay", api_twinklysay, methods=["POST"]),
+        Route("/api/run_card", api_run_card, methods=["POST"]),
         Route("/health", health_check, methods=["GET"]),
         # Mount MCP server (catch-all at root)
         Mount("/", app=mcp_app),
