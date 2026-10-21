@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: "0.13.1"
+          python-version: "3.11.17"
+      - name: Install locked dependencies
+        run: uv sync --locked
+      - name: Test with coverage
+        run: uv run --locked pytest --cov=twinkly_mcp --cov-branch --cov-report=term-missing --cov-fail-under=81
+      - name: Lint
+        run: uv run --locked ruff check src/ tests/
+      - name: Check formatting
+        run: uv run --locked ruff format --check src/ tests/
+      - name: Export locked dependencies
+        run: uv export --locked --all-groups --no-emit-project --format requirements-txt --output-file /tmp/twinkly-mcp-audit.txt
+      - name: Audit dependencies
+        run: uv run --locked pip-audit --no-deps --disable-pip --requirement /tmp/twinkly-mcp-audit.txt

@@ -24,7 +24,10 @@ def get_api_key() -> str | None:
 
 mcp = FastMCP(
     name="Twinkly MCP",
-    instructions="Remote control for Twinkly LED wall. Use twinklysay to display messages, run_card to trigger animations.",
+    instructions=(
+        "Remote control for Twinkly LED wall. "
+        "Use twinklysay to display messages, run_card to trigger animations."
+    ),
 )
 
 
@@ -157,11 +160,13 @@ async def register_cards(request: Request) -> JSONResponse:
 
         card_registry.register(cards)
 
-        return JSONResponse({
-            "status": "registered",
-            "count": len(cards),
-            "cards": card_registry.list_cards(),
-        })
+        return JSONResponse(
+            {
+                "status": "registered",
+                "count": len(cards),
+                "cards": card_registry.list_cards(),
+            }
+        )
     except Exception as e:
         return JSONResponse(
             {"error": str(e)},
@@ -171,9 +176,11 @@ async def register_cards(request: Request) -> JSONResponse:
 
 async def get_cards(request: Request) -> JSONResponse:
     """GET /api/cards - Get list of registered cards."""
-    return JSONResponse({
-        "cards": card_registry.list_cards(),
-    })
+    return JSONResponse(
+        {
+            "cards": card_registry.list_cards(),
+        }
+    )
 
 
 async def api_twinklysay(request: Request) -> JSONResponse:
@@ -196,11 +203,13 @@ async def api_twinklysay(request: Request) -> JSONResponse:
 
         cmd = command_queue.add("twinklysay", payload)
 
-        return JSONResponse({
-            "status": "queued",
-            "command_id": cmd.id,
-            "message": f"Message queued: '{text[:50]}{'...' if len(text) > 50 else ''}'",
-        })
+        return JSONResponse(
+            {
+                "status": "queued",
+                "command_id": cmd.id,
+                "message": f"Message queued: '{text[:50]}{'...' if len(text) > 50 else ''}'",
+            }
+        )
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=400)
 
@@ -215,18 +224,23 @@ async def api_run_card(request: Request) -> JSONResponse:
             return JSONResponse({"error": "card_id required"}, status_code=400)
 
         if not card_registry.is_known(card_id):
-            return JSONResponse({
-                "error": f"Unknown card '{card_id}'",
-                "available_cards": card_registry.list_cards(),
-            }, status_code=400)
+            return JSONResponse(
+                {
+                    "error": f"Unknown card '{card_id}'",
+                    "available_cards": card_registry.list_cards(),
+                },
+                status_code=400,
+            )
 
         cmd = command_queue.add("run_card", {"card_id": card_id})
 
-        return JSONResponse({
-            "status": "queued",
-            "command_id": cmd.id,
-            "message": f"Card '{card_id}' queued for display",
-        })
+        return JSONResponse(
+            {
+                "status": "queued",
+                "command_id": cmd.id,
+                "message": f"Card '{card_id}' queued for display",
+            }
+        )
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=400)
 
