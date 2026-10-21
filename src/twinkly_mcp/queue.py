@@ -1,7 +1,7 @@
 """Thread-safe command queue for Twinkly MCP."""
 
 import threading
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -13,7 +13,7 @@ class Command(BaseModel):
     id: str
     type: Literal["twinklysay", "run_card"]
     payload: dict
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class CommandQueue:
