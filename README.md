@@ -57,6 +57,11 @@ settings; adding the configuration does not enable those settings.
 | `TWINKLY_API_KEY` | Yes | API key for authentication |
 | `PORT` | No | Port to bind (default: 8000) |
 
+## Phone remote
+
+Scan a fixed QR URL to open a static phone remote with approved presets.
+See the [remote configuration and verification guide](docs/REMOTE.md).
+
 ## Deployment
 
 The Render blueprint is `render.yaml`; the repository's default branch is `master`.
