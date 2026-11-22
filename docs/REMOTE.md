@@ -13,7 +13,7 @@ connection to the server.
   a URL-safe key with `openssl rand -hex 32`.
 - Set `TWINKLY_REMOTE_PRESETS` to a comma-separated allowlist of card IDs, such
   as `party-flame`. The remote lists only approved IDs that the wall has
-  registered. Start the wall with MCP polling enabled so it registers the
+  registered since the service started. Start the wall with MCP polling enabled so it registers the
   catalog and receives commands.
 - After deploying, verify that `/api/cards` returns HTTP 401 without the main
   key and that the wall can poll using its bearer credential.

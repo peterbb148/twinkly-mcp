@@ -143,3 +143,28 @@ async def test_render_requires_api_key_except_for_health(
     monkeypatch.delenv("TWINKLY_REMOTE_KEY")
     assert (await client.get("/health")).status_code == 200
     assert (await client.get("/api/cards")).status_code == 503
+
+
+async def test_remote_waits_for_wall_registration(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("TWINKLY_REMOTE_PRESETS", "clock, fire")
+    registry = CardRegistry()
+    monkeypatch.setattr(remote, "card_registry", registry)
+    monkeypatch.setattr(server, "card_registry", registry)
+    privileged = {"Authorization": f"Bearer {API_KEY}"}
+
+    assert (await client.post("/remote/unlock", headers=QR_HEADER)).status_code == 204
+    assert "clock" in (await client.get("/api/cards", headers=privileged)).json()["cards"]
+    assert (await client.get("/remote/presets")).json() == {"presets": []}
+    assert (await client.post("/remote/play", json={"preset": "clock"})).status_code == 403
+    assert len(remote.command_queue) == 0
+
+    response = await client.post(
+        "/api/cards/register", headers=privileged, json={"cards": ["clock"]}
+    )
+    assert response.status_code == 200
+    assert (await client.get("/remote/presets")).json() == {"presets": ["clock"]}
+    assert (await client.post("/remote/play", json={"preset": "fire"})).status_code == 403
+    assert (await client.post("/remote/play", json={"preset": "clock"})).status_code == 200
+    assert len(remote.command_queue) == 1

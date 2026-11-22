@@ -64,7 +64,7 @@ def approved_presets() -> list[str]:
         for preset in os.environ.get("TWINKLY_REMOTE_PRESETS", "").split(",")
         if preset.strip()
     }
-    return sorted(approved.intersection(card_registry.list_cards()))
+    return sorted(approved.intersection(card_registry.list_wall_cards()))
 
 
 async def unlock(request: Request) -> Response:
