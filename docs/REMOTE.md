@@ -12,10 +12,12 @@ connection to the server.
 - Set `TWINKLY_REMOTE_KEY` on Render to a separate high-entropy secret. Generate
   a URL-safe key with `openssl rand -hex 32`.
 - Set `TWINKLY_REMOTE_PRESETS` to a comma-separated allowlist of card IDs, such
-  as `party-flame`. IDs are matched case-insensitively. The remote lists only
+  as `party-flame,skal`. IDs are matched case-insensitively. The remote lists only
   approved IDs that the wall has registered since the service started. Start
   the wall with MCP polling enabled so it registers the catalog and receives
-  commands.
+  commands. Run the wall client from a Twinkly Wall checkout containing
+  both cards in `config/cards.d` to make **Party Flame** and **Skål**
+  available. Skål displays a left-to-right `SKÅL!` message on the landscape wall.
 - After deploying, verify that `/api/cards` returns HTTP 401 without the main
   key and that the wall can poll using its bearer credential.
 
