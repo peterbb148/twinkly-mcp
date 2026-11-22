@@ -60,7 +60,7 @@ def has_session(request: Request) -> bool:
 def approved_presets() -> list[str]:
     """Return configured presets that the wall can play."""
     approved = {
-        preset.strip()
+        preset.strip().lower()
         for preset in os.environ.get("TWINKLY_REMOTE_PRESETS", "").split(",")
         if preset.strip()
     }

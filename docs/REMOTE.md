@@ -12,9 +12,10 @@ connection to the server.
 - Set `TWINKLY_REMOTE_KEY` on Render to a separate high-entropy secret. Generate
   a URL-safe key with `openssl rand -hex 32`.
 - Set `TWINKLY_REMOTE_PRESETS` to a comma-separated allowlist of card IDs, such
-  as `party-flame`. The remote lists only approved IDs that the wall has
-  registered since the service started. Start the wall with MCP polling enabled so it registers the
-  catalog and receives commands.
+  as `party-flame`. IDs are matched case-insensitively. The remote lists only
+  approved IDs that the wall has registered since the service started. Start
+  the wall with MCP polling enabled so it registers the catalog and receives
+  commands.
 - After deploying, verify that `/api/cards` returns HTTP 401 without the main
   key and that the wall can poll using its bearer credential.
 
@@ -39,7 +40,17 @@ replacement QR with the new key.
 
 Run `uv run --locked pytest tests/test_remote.py` to exercise the QR exchange,
 cookie expiry, rotation, preset allowlist, and privileged routes. For a
-browser check, run Uvicorn over HTTPS with a local certificate and distinct
-test keys, set `TWINKLY_REMOTE_PRESETS=clock`, and open the local equivalent of
-the QR URL. A successful click queues a command, which can be confirmed
-through the privileged polling endpoint using the MCP bearer key.
+browser check, run Uvicorn at `https://localhost:8000` with a trusted local
+certificate, distinct test keys, and `TWINKLY_REMOTE_PRESETS=clock`. Register
+the test catalog as the wall would before opening the QR URL.
+
+```bash
+curl --fail-with-body https://localhost:8000/api/cards/register \
+  -H "Authorization: Bearer ${TWINKLY_API_KEY}" \
+  -H 'Content-Type: application/json' \
+  --data '{"cards":["clock"]}'
+```
+
+Open `https://localhost:8000/remote#key=<remote-key>` using the local remote
+key and tap **Clock**. Confirm the `run_card` command through the privileged
+`/api/commands/poll` endpoint using the MCP bearer key.

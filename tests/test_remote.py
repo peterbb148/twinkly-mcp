@@ -18,7 +18,7 @@ async def client(monkeypatch: pytest.MonkeyPatch):
     """Configure distinct credentials and an isolated wall registry and queue."""
     monkeypatch.setenv("TWINKLY_API_KEY", API_KEY)
     monkeypatch.setenv("TWINKLY_REMOTE_KEY", REMOTE_KEY)
-    monkeypatch.setenv("TWINKLY_REMOTE_PRESETS", "party-flame, missing-card")
+    monkeypatch.setenv("TWINKLY_REMOTE_PRESETS", "  Party-Flame , MISSING-CARD  ")
     registry = CardRegistry()
     registry.register(["party-flame", "clock"])
     queue = CommandQueue()
