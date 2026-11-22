@@ -59,7 +59,7 @@ async function connect() {
       const button = document.createElement("button");
       button.type = "button";
       const words = preset.replace(/[-_]/g, " ");
-      button.textContent = words[0].toUpperCase() + words.slice(1);
+      button.textContent = preset === "skal" ? "Skål" : words[0].toUpperCase() + words.slice(1);
       button.addEventListener("click", () => play(preset, button));
       presets.append(button);
     }

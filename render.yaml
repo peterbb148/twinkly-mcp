@@ -16,6 +16,6 @@ services:
       - key: TWINKLY_REMOTE_KEY
         sync: false
       - key: TWINKLY_REMOTE_PRESETS
-        value: party-flame
+        value: party-flame,skal
     healthCheckPath: /health
     autoDeploy: true
