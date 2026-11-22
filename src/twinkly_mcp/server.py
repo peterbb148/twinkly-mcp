@@ -1,5 +1,6 @@
 """Twinkly MCP server with HTTP API for Raspberry Pi polling."""
 
+import hmac
 import os
 
 from fastmcp import FastMCP
@@ -10,6 +11,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.routing import Mount, Route
 
+from . import remote
 from .queue import card_registry, command_queue
 
 
@@ -259,13 +261,14 @@ class APIKeyAuthMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         # Always allow health check
-        if request.url.path == "/health":
+        if request.url.path == "/health" or request.url.path in remote.REMOTE_PATHS:
             return await call_next(request)
 
         api_key = get_api_key()
 
-        # Skip auth if no key configured (development mode)
         if not api_key:
+            if os.environ.get("RENDER") == "true" or os.environ.get("TWINKLY_REMOTE_KEY"):
+                return JSONResponse({"error": "API authentication unavailable"}, status_code=503)
             return await call_next(request)
 
         auth_header = request.headers.get("authorization", "")
@@ -278,7 +281,7 @@ class APIKeyAuthMiddleware(BaseHTTPMiddleware):
 
         token = auth_header.removeprefix("Bearer ").strip()
 
-        if token != api_key:
+        if not hmac.compare_digest(token.encode(), api_key.encode()):
             return JSONResponse(
                 {"error": "Invalid API key"},
                 status_code=401,
@@ -304,6 +307,7 @@ app = Starlette(
         Route("/api/twinklysay", api_twinklysay, methods=["POST"]),
         Route("/api/run_card", api_run_card, methods=["POST"]),
         Route("/health", health_check, methods=["GET"]),
+        *remote.routes,
         # Mount MCP server (catch-all at root)
         Mount("/", app=mcp_app),
     ],
