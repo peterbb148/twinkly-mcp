@@ -10,8 +10,12 @@ Claude Desktop ──MCP──▶ Render (twinkly-mcp) ◀──HTTP poll── 
 
 ## MCP Tools
 
-- `twinklysay(text)` - Display a text message on the LED wall
-- `run_card(card_id)` - Run a specific display card (clock, pacman, snow, etc.)
+- `list_cards()` lists available card IDs.
+- `run_card(card_id)` queues a display card.
+- `twinklysay(text, color?)` queues a text message with an optional color.
+
+See the [Twinkly MCP skill](.agents/skills/twinkly-mcp/SKILL.md) for client setup
+and examples.
 
 ## HTTP API (for Raspberry Pi)
 
