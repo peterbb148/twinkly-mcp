@@ -139,6 +139,7 @@ class CardRegistry:
 
     def __init__(self):
         self._cards: set[str] = set(self.DEFAULT_CARDS)
+        self._wall_registered = False
         self._lock = threading.Lock()
 
     def register(self, cards: list[str]) -> None:
@@ -151,6 +152,7 @@ class CardRegistry:
         """
         with self._lock:
             self._cards = set(card.lower().strip() for card in cards)
+            self._wall_registered = True
 
     def add(self, card_id: str) -> None:
         """Add a single card to the registry.
@@ -191,10 +193,16 @@ class CardRegistry:
         with self._lock:
             return sorted(self._cards)
 
+    def list_wall_cards(self) -> list[str]:
+        """List cards only after the wall has registered its catalog."""
+        with self._lock:
+            return sorted(self._cards) if self._wall_registered else []
+
     def clear(self) -> None:
         """Clear all cards (for testing)."""
         with self._lock:
             self._cards.clear()
+            self._wall_registered = False
 
 
 # Singleton card registry instance
