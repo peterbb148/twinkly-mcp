@@ -245,10 +245,42 @@ curl https://twinkly-mcp.onrender.com/api/cards
 returns `{"snapshot": ..., "age_ms": ...}`. Both use the existing bearer
 authentication. A server with no snapshot reports both fields as null.
 
-Version 1 snapshots carry the publisher start number, sequence, wall state,
-orientation, and mirrors. A playing snapshot also contains the playback instance,
-card ID, elapsed milliseconds, and optional replay parameters. The current
-renderers are `pacman_up/v1` and `lunch_horizontal/v1`. An unsupported card uses
-null replay inputs. The server accepts at most 2,048 bytes of JSON per update and
-rejects older snapshots. It stores only the last one in memory. Age is measured
-from server receipt. The terminal watcher treats it as stale after 30 seconds.
+A version 1 playing snapshot looks like this.
+
+```json
+{
+  "version": 1,
+  "publisher": 1800000000000000000,
+  "sequence": 12,
+  "state": "playing",
+  "orientation": "left",
+  "mirror_h": true,
+  "mirror_v": false,
+  "playback": {
+    "instance": 10,
+    "card_id": "lunch_horizontal",
+    "elapsed_ms": 450,
+    "replay": {"renderer": "lunch_horizontal/v1", "meal": "Red Cabbage"}
+  }
+}
+```
+
+All keys shown are required. Use `"playback": null` for `idle` and `off`.
+For a playing card whose renderer has no local replay support, use
+`"replay": null` inside the playback object. Unknown fields are rejected.
+
+| Replay renderer | Required fields in addition to `renderer` |
+| --- | --- |
+| `lunch_horizontal/v1` | `meal`, the selected meal string, up to 250 characters |
+| `pacman_up/v1` | `theme` (name), `speed` (positive pixels/second, up to 1000), `num_items` (0–100), `repeats` (1–100), `color` (three RGB bytes) |
+
+Use one positive integer `publisher` for the life of the wall daemon. The client
+uses its startup Unix timestamp in nanoseconds. Increase `sequence` on every
+update and heartbeat. The server accepts strictly increasing
+`(publisher, sequence)` pairs. Use a higher publisher value before restarting
+the sequence on daemon restart. An older or duplicate update returns HTTP
+409. Invalid or incomplete payloads return HTTP 400, and requests larger
+than 2,048 bytes return HTTP 413.
+
+The server stores only the last snapshot in memory. Age is measured from
+server receipt. The terminal watcher treats it as stale after 30 seconds.
