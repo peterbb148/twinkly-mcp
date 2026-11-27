@@ -12,6 +12,7 @@ from starlette.responses import JSONResponse
 from starlette.routing import Mount, Route
 
 from . import remote
+from .now_playing import get_now_playing, publish_now_playing
 from .queue import card_registry, command_queue
 
 
@@ -306,6 +307,8 @@ app = Starlette(
         Route("/api/cards/register", register_cards, methods=["POST"]),
         Route("/api/twinklysay", api_twinklysay, methods=["POST"]),
         Route("/api/run_card", api_run_card, methods=["POST"]),
+        Route("/api/now-playing", get_now_playing, methods=["GET"]),
+        Route("/api/now-playing", publish_now_playing, methods=["POST"]),
         Route("/health", health_check, methods=["GET"]),
         *remote.routes,
         # Mount MCP server (catch-all at root)
