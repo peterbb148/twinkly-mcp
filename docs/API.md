@@ -238,3 +238,17 @@ curl https://twinkly-mcp.onrender.com/api/cards
 ```json
 {"error": "Authentication required. Provide Authorization: Bearer <token>"}
 ```
+
+### Now playing
+
+`POST /api/now-playing` publishes the latest wall state. `GET /api/now-playing`
+returns `{"snapshot": ..., "age_ms": ...}`. Both use the existing bearer
+authentication. A server with no snapshot reports both fields as null.
+
+Version 1 snapshots carry the publisher start number, sequence, wall state,
+orientation, and mirrors. A playing snapshot also contains the playback instance,
+card ID, elapsed milliseconds, and optional replay parameters. The current
+renderers are `pacman_up/v1` and `lunch_horizontal/v1`. An unsupported card uses
+null replay inputs. The server accepts at most 2,048 bytes of JSON per update and
+rejects older snapshots. It stores only the last one in memory. Age is measured
+from server receipt. The terminal watcher treats it as stale after 30 seconds.
